@@ -112,6 +112,13 @@ section{padding:46px 26px}
 .chips button[aria-pressed=true]{background:rgba(217,180,108,.18);border-color:var(--gold);color:var(--ink)}
 .prev{margin-top:16px;background:#0a1124;border-left:2px solid var(--gold);padding:12px 14px;font-size:14px;white-space:pre-line;color:#ddd5c4}
 .gbtn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:14px;border:0;background:linear-gradient(180deg,#ecca86,#b98a44);color:#17110a;font:700 16px "Noto Sans KR",sans-serif;cursor:pointer;text-decoration:none}
+.done{text-align:center;padding:34px 22px}
+.done .ck{width:54px;height:54px;margin:0 auto 14px;border:1.5px solid var(--gold);border-radius:50%;position:relative}
+.done .ck::after{content:"";position:absolute;left:18px;top:13px;width:12px;height:22px;border:solid var(--gold);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.done h3{font-size:21px;margin-bottom:10px}
+.done p{font-size:14.5px;color:#ddd5c4;white-space:pre-line}
+.done .dsub{color:var(--mute);margin-top:10px;font-size:13.5px}
+.gbtn:disabled{opacity:.6}
 .hint{font-size:13px;color:var(--mute);margin-top:10px;text-align:center}
 /* footer */
 .foot{background:#f8f3ea;color:#4a3d2f;padding:30px 26px 34px;text-align:center}
@@ -184,7 +191,7 @@ section{padding:46px 26px}
 
 <section id="rsvp">
   <div class="sh"><span class="en">R.S.V.P.</span><h2>참석 여부를 알려주세요</h2></div>
-  <div class="rs">
+  <div class="rs" id="rsf">
     <label for="rn">성함</label>
     <input id="rn" autocomplete="name" placeholder="성함을 적어 주세요">
     <label>참석 회차</label>
@@ -196,9 +203,19 @@ section{padding:46px 26px}
     </div>
     <label for="rc">동반 인원</label>
     <select id="rc"><option value="0">본인만</option><option value="1">동반 1명</option><option value="2">동반 2명</option></select>
-    <div class="prev" id="pv"></div>
-    <a class="gbtn" id="send" href="#rsvp">회신 문구 복사하기</a>
-    <p class="hint" id="hint">복사한 뒤 초대장을 받으신 카카오톡 대화방에 붙여 넣어 보내주시면 됩니다.</p>
+    <label for="rp">연락처 <span style="opacity:.7">(선택)</span></label>
+    <input id="rp" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000">
+    <label for="rm">전하실 말씀 <span style="opacity:.7">(선택)</span></label>
+    <input id="rm" maxlength="200" placeholder="궁금하신 점이나 요청 사항">
+    <button type="button" class="gbtn" id="send">참석 회신 보내기</button>
+    <p class="hint" id="hint">보내주신 내용은 글로벌프론티어에셋 담당자만 확인합니다.</p>
+  </div>
+  <div class="rs done" id="rsd" hidden>
+    <div class="ck" aria-hidden="true"></div>
+    <h3 class="serif">회신이 접수되었습니다</h3>
+    <p id="dsum"></p>
+    <p class="dsub">자리를 준비해 두겠습니다. 행사 전날 안내 문자를 한 번 더 보내드립니다.</p>
+    <button type="button" class="btn full" id="redo" style="width:100%;margin-top:16px">내용 고쳐서 다시 보내기</button>
   </div>
 </section>
 
@@ -219,8 +236,8 @@ section{padding:46px 26px}
 
 <script>
 {
-/* 구글폼을 쓰게 되면 아래에 폼 주소(…/viewform)를 넣으면 회신 버튼이 폼으로 연결됩니다. 비워두면 '문구 복사' 방식. */
-const FORM_URL = '';
+/* 구글 시트 Apps Script 웹앱 주소(…/exec). 시트에 '구글시트_회신수집.gs'를 붙여 배포한 뒤 받은 주소를 넣습니다. */
+const SHEET_URL = '';
 
 const S = {
   1:{day:'12.11',dow:'금요일 오후 6시',place:'하나은행 PB센터 Place1 4층',addr:'서울 강남구 영동대로96길 26',
@@ -294,26 +311,34 @@ document.querySelectorAll('[data-ics]').forEach(b=>b.addEventListener('click',()
   setTimeout(()=>URL.revokeObjectURL(url),4000);
 }));
 
-/* 회신 */
+/* 회신 → 구글 시트 */
 let sel = r==='1'?'1회':r==='2'?'2회':'';
+const $=id=>document.getElementById(id);
 const chips=[...document.querySelectorAll('#rr button')];
-const pv=document.getElementById('pv'), rn=document.getElementById('rn'), rc=document.getElementById('rc');
-const msg=()=>`[세미나 참석 회신]\n성함: ${rn.value.trim()||'(성함)'}\n회차: ${sel||'(선택)'}${sel&&sel!=='이번엔 어렵습니다'&&rc.value!=='0'?'\n동반: '+rc.value+'명':''}`;
-const draw=()=>{chips.forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===sel));pv.textContent=msg()};
-chips.forEach(c=>c.addEventListener('click',()=>{sel=c.dataset.v;draw()}));
-rn.addEventListener('input',draw);rc.addEventListener('change',draw);draw();
-const toast=t=>{const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)};
-const send=document.getElementById('send');
-if(FORM_URL){send.textContent='회신서 작성하기';document.getElementById('hint').textContent='구글 회신서로 연결됩니다.';}
-send.addEventListener('click',e=>{
-  if(FORM_URL){send.href=FORM_URL;send.target='_blank';return;}
-  e.preventDefault();
-  if(!sel){toast('참석 회차를 먼저 골라 주세요');return;}
-  const t=msg();
-  const done=()=>toast('복사했습니다. 초대장을 받으신 카카오톡 대화방에 붙여 넣어 주세요');
-  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,()=>fallback(t))}else fallback(t);
-  function fallback(t){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');done()}catch(err){toast('길게 눌러 위 문구를 복사해 주세요')}ta.remove();}
+const draw=()=>chips.forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===sel));
+chips.forEach(c=>c.addEventListener('click',()=>{sel=c.dataset.v;draw()}));draw();
+const toast=t=>{const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)};
+const KEY='gfa-vip-rsvp:'+(q.get('n')||'');
+const showDone=d=>{$('rsf').hidden=true;$('rsd').hidden=false;
+  $('dsum').textContent=d.round==='이번엔 어렵습니다'?`${d.name}님, 알려주셔서 감사합니다.\n다음 자리에서 꼭 뵙겠습니다.`:`${d.name}님 · ${d.round}${d.companions!=='0'?' · 동반 '+d.companions+'명':''}`};
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)showDone(saved)}catch(e){}
+$('redo').addEventListener('click',()=>{$('rsd').hidden=true;$('rsf').hidden=false;$('rn').focus()});
+const send=$('send');
+send.addEventListener('click',async()=>{
+  const d={name:$('rn').value.trim(),phone:$('rp').value.trim(),round:sel,companions:sel==='이번엔 어렵습니다'?'0':$('rc').value,
+    memo:$('rm').value.trim(),invitedName:name,invitedRound:r,agent:navigator.userAgent.slice(0,120)};
+  if(!d.name){toast('성함을 적어 주세요');$('rn').focus();return;}
+  if(!d.round){toast('참석 회차를 골라 주세요');return;}
+  if(!SHEET_URL){toast('회신 접수 준비 중입니다. 02-525-5150으로 연락 부탁드립니다');return;}
+  send.disabled=true;send.textContent='보내는 중…';
+  try{
+    const res=await fetch(SHEET_URL,{method:'POST',body:JSON.stringify(d)});
+    const j=await res.json().catch(()=>({ok:res.ok}));
+    if(!j.ok)throw new Error('fail');
+    try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}
+    showDone(d);$('rsvp').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){toast('전송이 되지 않았습니다. 잠시 후 다시 눌러 주시거나 02-525-5150으로 연락 부탁드립니다');}
+  finally{send.disabled=false;send.textContent='참석 회신 보내기';}
 });
 }
 </script>
