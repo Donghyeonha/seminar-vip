@@ -55,8 +55,8 @@ textarea{width:100%;min-height:130px;font:16px/1.6 "Noto Sans KR",sans-serif;bor
 /* 카카오 디벨로퍼스 → 내 애플리케이션 → 앱 키의 'JavaScript 키' */
 const JS_KEY = '4e5c3ae9c8ddf74498cc0303dc6b345d';
 const BASE = 'https://gfa-vip.pages.dev/';
-const IMG = BASE + 'og.jpg';
-const R = {1:'12.11(금) 오후 6시 · 하나은행 PB센터', 2:'12.13(일) 오후 2시 · DB금융센터 27층', '':'12.11(금) 하나은행 PB센터 · 12.13(일) DB금융센터'};
+const IMG = BASE + 'og-v2.jpg';
+const R = {1:'12.11(금) 오후 6시 · 하나은행 Club1 PB센터', 2:'12.13(일) 오후 2시 · DB금융센터 27층', '':'12.11(금) 하나은행 Club1 PB센터 · 12.13(일) DB금융센터'};
 const enc=s=>{const b=new TextEncoder().encode(s);let t='';b.forEach(x=>t+=String.fromCharCode(x));return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let ready=false;
@@ -74,7 +74,7 @@ document.getElementById('go').onclick=()=>{
 };
 function render(){
   document.getElementById('out').innerHTML=rows.map((x,i)=>`<div class="row">
-    <div class="card"><img src="og.jpg" alt=""><b>${esc(x.n)}님을 모십니다</b><span>${esc(R[x.rr])}</span><div><i>초대장 보기</i><i>참석 회신</i></div></div>
+    <div class="card"><img src="og-v2.jpg" alt=""><b>${esc(x.n)}님을 모십니다</b><span>${esc(R[x.rr])}</span><div><i>초대장 보기</i><i>참석 회신</i></div></div>
     <div><h3>${esc(x.n)}<small>${x.rr?x.rr+'회':'1·2회'}</small></h3><p class="u">${esc(x.url)}</p>
     <div class="bts"><button class="btn kk" data-i="${i}" data-a="kakao" ${ready?'':'disabled style="opacity:.5"'}>카톡으로 보내기</button><button class="btn ghost" data-i="${i}" data-a="copy">링크 복사</button></div>
     ${sent[x.n]?`<p class="sent">보내기 창을 연 시각: ${esc(sent[x.n])}</p>`:''}</div></div>`).join('');
