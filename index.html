@@ -131,7 +131,8 @@ section{padding:46px 26px}
 .foot p{font-size:12px;color:#8a7a68;margin-top:20px;line-height:1.6}
 /* sticky */
 .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(8,13,28,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:9}
-.bar a{display:flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;font-size:15px}
+.bar a,.bar button{display:flex;border:0;font:inherit;cursor:pointer;color:inherit;align-items:center;justify-content:center;min-height:48px;text-decoration:none;font-size:15px}
+.bar .go:disabled{opacity:.7}
 .bar .call{border:1px solid rgba(217,180,108,.5)}
 .bar .go{background:linear-gradient(180deg,#ecca86,#b98a44);color:#17110a;font-weight:700}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#f3ecdc;color:#141018;font-size:14px;padding:10px 16px;opacity:0;transition:.25s;z-index:10;pointer-events:none;max-width:90vw;text-align:center}
@@ -204,13 +205,12 @@ section{padding:46px 26px}
       <button type="button" data-v="이번엔 어렵습니다" aria-pressed="false">불참</button>
     </div>
     <label for="rc">동반 인원</label>
-    <select id="rc"><option value="0">본인만</option><option value="1">동반 1명</option><option value="2">동반 2명</option></select>
+    <select id="rc"><option value="0">본인만</option><option value="1">동반 1명</option></select>
     <label for="rp">연락처 <span style="opacity:.7">(선택)</span></label>
     <input id="rp" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000">
     <label for="rm">전하실 말씀 <span style="opacity:.7">(선택)</span></label>
     <input id="rm" maxlength="200" placeholder="궁금하신 점이나 요청 사항">
-    <button type="button" class="gbtn" id="send">참석 회신 보내기</button>
-    <p class="hint" id="hint">보내주신 내용은 글로벌프론티어에셋 담당자만 확인합니다.</p>
+    <p class="hint" id="hint">아래 <b style="color:var(--gold)">[참석 회신하기]</b> 버튼을 누르면 접수됩니다. 보내주신 내용은 글로벌프론티어에셋 담당자만 확인합니다.</p>
   </div>
   <div class="rs done" id="rsd" hidden>
     <div class="ck" aria-hidden="true"></div>
@@ -233,7 +233,7 @@ section{padding:46px 26px}
 </footer>
 </div>
 
-<nav class="bar"><a class="call" href="tel:025255150">문의 전화</a><a class="go" href="#rsvp">참석 회신하기</a></nav>
+<nav class="bar"><a class="call" href="tel:025255150">문의 전화</a><button type="button" class="go" id="send">참석 회신하기</button></nav>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -326,7 +326,16 @@ const showDone=d=>{$('rsf').hidden=true;$('rsd').hidden=false;
 try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)showDone(saved)}catch(e){}
 $('redo').addEventListener('click',()=>{$('rsd').hidden=true;$('rsf').hidden=false;$('rn').focus()});
 const send=$('send');
+/* 회신 칸이 화면에 보이는지: 보이지 않을 때 누르면 먼저 회신 칸으로 이동 */
+let inView=false;
+const io=new IntersectionObserver(es=>{inView=es[0].isIntersecting;label()},{threshold:.35});io.observe($('rsvp'));
+const done=()=>!$('rsd').hidden;
+const label=()=>{if(send.disabled)return;send.textContent=done()?'회신 완료 ✓':inView?'이 내용으로 회신 보내기':'참석 회신하기'};
+const go=()=>$('rsvp').scrollIntoView({behavior:'smooth',block:'start'});
+chips.forEach(c=>c.addEventListener('click',label));
+$('redo').addEventListener('click',label);
 send.addEventListener('click',async()=>{
+  if(done()||!inView){go();if(!done())setTimeout(()=>toast('회차를 고르신 뒤 버튼을 한 번 더 눌러 주세요'),500);return;}
   const d={name:$('rn').value.trim(),phone:$('rp').value.trim(),round:sel,companions:sel==='이번엔 어렵습니다'?'0':$('rc').value,
     memo:$('rm').value.trim(),invitedName:name,invitedRound:r,agent:navigator.userAgent.slice(0,120)};
   if(!d.name){toast('성함을 적어 주세요');$('rn').focus();return;}
@@ -338,10 +347,11 @@ send.addEventListener('click',async()=>{
     const j=await res.json().catch(()=>({ok:res.ok}));
     if(!j.ok)throw new Error('fail');
     try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}
-    showDone(d);$('rsvp').scrollIntoView({behavior:'smooth',block:'start'});
+    showDone(d);go();
   }catch(e){toast('전송이 되지 않았습니다. 잠시 후 다시 눌러 주시거나 02-525-5150으로 연락 부탁드립니다');}
-  finally{send.disabled=false;send.textContent='참석 회신 보내기';}
+  finally{send.disabled=false;label();}
 });
+label();
 }
 </script>
 </body>
