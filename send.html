@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VIP 초대장 카톡 보내기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0e1830;--gold:#b98a44;--ink:#141c2b;--line:#e4e1d9;--soft:#f7f5f0}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--soft);color:var(--ink);font:16px/1.6 "Noto Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;word-break:keep-all}
+.hd{background:var(--navy);color:#eef1f7;padding:28px max(5vw,16px) 24px}
+.in{max-width:760px;margin:0 auto}
+h1{font-family:"Noto Serif KR",serif;font-size:26px;margin:0 0 4px}
+.hd p{margin:0;color:#c3cad9;font-size:15px}
+main{padding:20px max(5vw,16px) 60px}
+.box{background:#fff;border:1px solid var(--line);padding:18px}
+label{display:block;font-weight:700;font-size:14px;margin:0 0 6px}
+textarea{width:100%;min-height:130px;font:16px/1.6 "Noto Sans KR",sans-serif;border:1px solid #cfc9bc;padding:10px 12px}
+.ex{font-size:13.5px;color:#5b6576;margin:6px 0 12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border:0;font:700 15px "Noto Sans KR",sans-serif;cursor:pointer;background:var(--navy);color:#fff;text-decoration:none}
+.kk{background:#fee500;color:#191600}
+.ghost{background:#fff;color:var(--ink);border:1px solid #cfc9bc}
+.ok{background:#2e7d4f!important;color:#fff!important}
+.warn{background:#fff6e5;border:1px solid #f0d9a8;padding:10px 14px;font-size:14.5px;margin-bottom:14px}
+.row{background:#fff;border:1px solid var(--line);margin-top:12px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:14px}
+.card{border-radius:10px;overflow:hidden;border:1px solid #eee;background:#fff;font-size:11px}
+.card img{display:block;width:100%;aspect-ratio:1200/630;object-fit:cover}
+.card b{display:block;padding:6px 7px 0;font-size:11.5px}
+.card span{display:block;padding:0 7px 6px;color:#777}
+.card div{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #eee;text-align:center}
+.card div i{font-style:normal;padding:5px 0;font-weight:700}.card div i+i{border-left:1px solid #eee}
+.row h3{margin:0 0 2px;font-size:17px}.row h3 small{color:#8a6a2c;font-weight:500;margin-left:6px;font-size:14px}
+.row .u{font-size:12.5px;color:#5b6576;word-break:break-all;margin:2px 0 10px}
+.bts{display:flex;gap:8px;flex-wrap:wrap}
+.sent{color:#2e7d4f;font-size:13.5px;font-weight:700;margin-top:8px}
+@media(max-width:520px){.row{grid-template-columns:minmax(0,1fr)}.card{max-width:220px}}
+</style>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.6/kakao.min.js" integrity="sha384-WAtVcQYcmTO/N+C1N+1m6Gp8qxh+3NlnP7X1U7qP6P5dQY/MsRBNTh+e1ahJrkEm" crossorigin="anonymous"></script>
+</head><body>
+<header class="hd"><div class="in">
+<h1>VIP 초대장 카카오톡으로 보내기</h1>
+<p>이름을 넣고 [카톡으로 보내기]를 누르면, 그분 성함이 들어간 초대 카드(이미지 + 버튼 2개)를 원하는 카톡방에 보냅니다.</p>
+</div></header>
+<main><div class="in">
+<div class="warn" id="nokey" hidden>카카오 앱 키가 아직 연결되지 않았습니다. 연결 전에는 [링크 복사]만 사용할 수 있습니다.</div>
+<div class="box">
+<label for="list">보낼 분 (한 줄에 한 분)</label>
+<textarea id="list" placeholder="김철수 대표, 1&#10;이영희 원장, 2&#10;박민수 회장"></textarea>
+<p class="ex">형식: <b>성함 직함, 회차</b> · 회차는 1 또는 2, 비우면 1·2회 모두. 입력한 명단은 이 브라우저 안에서만 쓰이고 어디에도 저장·전송되지 않습니다.</p>
+<button class="btn" id="go">카드 만들기</button>
+</div>
+<div id="out"></div>
+</div></main>
+<script>
+{
+/* 카카오 디벨로퍼스 → 내 애플리케이션 → 앱 키의 'JavaScript 키' */
+const JS_KEY = '4e5c3ae9c8ddf74498cc0303dc6b345d';
+const BASE = 'https://gfa-vip.pages.dev/';
+const IMG = BASE + 'og.jpg';
+const R = {1:'12.11(금) 오후 6시 · 하나은행 PB센터', 2:'12.13(일) 오후 2시 · DB금융센터 27층', '':'12.11(금) 하나은행 PB센터 · 12.13(일) DB금융센터'};
+const enc=s=>{const b=new TextEncoder().encode(s);let t='';b.forEach(x=>t+=String.fromCharCode(x));return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ready=false;
+try{ if(JS_KEY && window.Kakao){ if(!Kakao.isInitialized()) Kakao.init(JS_KEY); ready=Kakao.isInitialized(); } }catch(e){}
+document.getElementById('nokey').hidden=ready;
+let rows=[];
+const SENT_KEY='gfa-vip-sent';
+let sent={};try{sent=JSON.parse(localStorage.getItem(SENT_KEY)||'{}')}catch(e){}
+const mark=n=>{sent[n]=new Date().toLocaleString('ko-KR');try{localStorage.setItem(SENT_KEY,JSON.stringify(sent))}catch(e){}};
+document.getElementById('go').onclick=()=>{
+  rows=document.getElementById('list').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const [n,r='']=l.split(/[,\t]/).map(x=>x.trim());const rr=['1','2'].includes(r)?r:'';
+    return {n,rr,url:BASE+'?n='+enc(n)+(rr?'&r='+rr:'')}});
+  render();
+};
+function render(){
+  document.getElementById('out').innerHTML=rows.map((x,i)=>`<div class="row">
+    <div class="card"><img src="og.jpg" alt=""><b>${esc(x.n)}님을 모십니다</b><span>${esc(R[x.rr])}</span><div><i>초대장 보기</i><i>참석 회신</i></div></div>
+    <div><h3>${esc(x.n)}<small>${x.rr?x.rr+'회':'1·2회'}</small></h3><p class="u">${esc(x.url)}</p>
+    <div class="bts"><button class="btn kk" data-i="${i}" data-a="kakao" ${ready?'':'disabled style="opacity:.5"'}>카톡으로 보내기</button><button class="btn ghost" data-i="${i}" data-a="copy">링크 복사</button></div>
+    ${sent[x.n]?`<p class="sent">보내기 창을 연 시각: ${esc(sent[x.n])}</p>`:''}</div></div>`).join('');
+  document.querySelectorAll('#out [data-a]').forEach(b=>b.onclick=()=>act(rows[b.dataset.i],b));
+}
+function act(x,b){
+  if(b.dataset.a==='copy'){
+    const done=()=>{const o=b.textContent;b.textContent='복사됨';b.classList.add('ok');setTimeout(()=>{b.textContent=o;b.classList.remove('ok')},1400)};
+    navigator.clipboard?navigator.clipboard.writeText(x.url).then(done,()=>prompt('복사해 주세요',x.url)):prompt('복사해 주세요',x.url);return;
+  }
+  if(!ready)return;
+  Kakao.Share.sendDefault({
+    objectType:'feed',
+    content:{title:`${x.n}님을 모십니다`,description:`2027 한미 자산이전·정착 전략 세미나\n${R[x.rr]}`,
+      imageUrl:IMG,imageWidth:1200,imageHeight:630,link:{mobileWebUrl:x.url,webUrl:x.url}},
+    buttons:[{title:'초대장 보기',link:{mobileWebUrl:x.url,webUrl:x.url}},
+             {title:'참석 회신',link:{mobileWebUrl:x.url+'#rsvp',webUrl:x.url+'#rsvp'}}]
+  });
+  mark(x.n);setTimeout(render,800);
+}
+}
+</script>
+</body></html>
